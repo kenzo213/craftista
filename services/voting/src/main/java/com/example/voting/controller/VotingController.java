@@ -57,4 +57,9 @@ public class VotingController {
         origami.setVotes(origami.getVotes() + 1);
         return origamiRepository.save(origami);
     }
+
+    @GetMapping("/voting-status")
+    public ResponseEntity<String> getVotingStatus() {
+        return ResponseEntity.ok("Voting service is healthy");
+    }
 }

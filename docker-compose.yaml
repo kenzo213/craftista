@@ -6,7 +6,7 @@ services:
   frontend:
     image: my/craftista-frontend:dev
     build:
-      context: ./frontend
+      context: ./services/frontend
     ports:
       - "80:3000"
     networks:
@@ -15,11 +15,16 @@ services:
   catalogue:
     image: my/craftista-catalogue:dev
     build:
-      context: ./catalogue
+      context: ./services/catalogue
     ports:
       - "5000:5000"
     networks:
       - craftista
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1',5000)); s.close()\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   catalogue-db:
     image: postgres:16.2-alpine3.19
@@ -33,7 +38,7 @@ services:
   recco:
     image: my/craftista-recco:dev
     build:
-      context: ./recommendation
+      context: ./services/recommendation
     ports:
       - "8080:8080"
     networks:
@@ -42,7 +47,7 @@ services:
   voting:
     image: my/craftista-voting:dev
     build:
-      context: ./voting
+      context: ./services/voting
     ports:
       - "8081:8080"
     depends_on: 
