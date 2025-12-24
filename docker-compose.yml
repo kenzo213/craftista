@@ -1,0 +1,88 @@
+services:
+  catalogue:
+    build:
+      context: ./services/catalogue
+    image: craftista/catalogue:local
+    container_name: catalogue
+    ports:
+      - "5000:5000"
+    networks:
+      - craftista-network
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/api/products\")' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./services/frontend
+    image: craftista/frontend:local
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - craftista-network
+    depends_on:
+      catalogue:
+        condition: service_healthy
+      recommendation:
+        condition: service_healthy
+      voting:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  recommendation:
+    build:
+      context: ./services/recommendation
+    image: craftista/recommendation:local
+    container_name: recco
+    ports:
+      - "8081:8080"
+    networks:
+      - craftista-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  voting:
+    build:
+      context: ./services/voting
+    image: craftista/voting:local
+    container_name: voting
+    ports:
+      - "8080:8080"
+    networks:
+      - craftista-network
+    depends_on:
+      catalogue:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/api/origamis || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+networks:
+  craftista-network:
+    driver: bridge

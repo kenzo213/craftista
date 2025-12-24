@@ -1,0 +1,9 @@
+*.exe
+*.test
+*.out
+.git
+.gitignore
+*.md
+tests/
+vendor/
+bin/

@@ -1,0 +1,14 @@
+target/
+.mvn/
+mvnw
+mvnw.cmd
+.git
+.gitignore
+.github
+*.md
+src/test/
+*.orig
+HELP.md
+.classpath
+.project
+.settings/
