@@ -1,0 +1,66 @@
+name: craftista-demo
+services:
+  catalogue:
+    build:
+      context: /home/kenzo/craftista-demo/catalogue
+      dockerfile: Dockerfile
+    image: my/craftista-catalogue:dev
+    networks:
+      craftista: null
+    ports:
+      - mode: ingress
+        target: 5000
+        published: "5000"
+        protocol: tcp
+  catalogue-db:
+    environment:
+      POSTGRES_DB: catalogue
+      POSTGRES_PASSWORD: devops
+      POSTGRES_USER: devops
+    image: postgres:16.2-alpine3.19
+    networks:
+      craftista: null
+  frontend:
+    build:
+      context: /home/kenzo/craftista-demo/frontend
+      dockerfile: Dockerfile
+    image: my/craftista-frontend:dev
+    networks:
+      craftista: null
+    ports:
+      - mode: ingress
+        target: 3000
+        published: "80"
+        protocol: tcp
+  recco:
+    build:
+      context: /home/kenzo/craftista-demo/recommendation
+      dockerfile: Dockerfile
+    image: my/craftista-recco:dev
+    networks:
+      craftista: null
+    ports:
+      - mode: ingress
+        target: 8080
+        published: "8080"
+        protocol: tcp
+  voting:
+    build:
+      context: /home/kenzo/craftista-demo/voting
+      dockerfile: Dockerfile
+    depends_on:
+      catalogue:
+        condition: service_started
+        required: true
+    image: my/craftista-voting:dev
+    networks:
+      craftista: null
+    ports:
+      - mode: ingress
+        target: 8080
+        published: "8081"
+        protocol: tcp
+networks:
+  craftista:
+    name: craftista-demo_craftista
+    driver: bridge
