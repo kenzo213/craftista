@@ -1,0 +1,21 @@
+# Development environment overrides
+namespace: craftista-dev
+imageTag: sha-2305f20
+
+catalogue:
+  replicaCount: 1
+  env:
+    FLASK_ENV: development
+
+frontend:
+  replicaCount: 1
+  env:
+    NODE_ENV: development
+
+voting:
+  replicaCount: 1
+  env:
+    SPRING_PROFILES_ACTIVE: dev
+
+recommendation:
+  replicaCount: 1

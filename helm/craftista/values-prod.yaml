@@ -1,0 +1,49 @@
+# Production environment overrides
+namespace: craftista
+imageTag: sha-2305f20
+
+catalogue:
+  replicaCount: 3
+  env:
+    FLASK_ENV: production
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+frontend:
+  replicaCount: 3
+  env:
+    NODE_ENV: production
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+voting:
+  replicaCount: 3
+  env:
+    SPRING_PROFILES_ACTIVE: prod
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+recommendation:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

@@ -1,0 +1,21 @@
+# Staging environment overrides
+namespace: craftista-staging
+imageTag: sha-2305f20
+
+catalogue:
+  replicaCount: 2
+  env:
+    FLASK_ENV: staging
+
+frontend:
+  replicaCount: 2
+  env:
+    NODE_ENV: staging
+
+voting:
+  replicaCount: 2
+  env:
+    SPRING_PROFILES_ACTIVE: staging
+
+recommendation:
+  replicaCount: 2
