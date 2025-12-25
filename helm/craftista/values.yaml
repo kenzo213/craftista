@@ -1,0 +1,16 @@
+namespace: craftista
+
+images:
+  catalogue: 132410971191.dkr.ecr.us-east-1.amazonaws.com/craftista-catalogue:sha-2305f20
+  frontend: 132410971191.dkr.ecr.us-east-1.amazonaws.com/craftista-frontend:sha-2305f20
+  recommendation: 132410971191.dkr.ecr.us-east-1.amazonaws.com/craftista-recommendation:sha-2305f20
+  voting: 132410971191.dkr.ecr.us-east-1.amazonaws.com/craftista-voting:sha-2305f20
+
+replicas:
+  catalogue: 2
+  frontend: 1
+  recommendation: 2
+  voting: 2
+
+service:
+  frontendPort: 80
