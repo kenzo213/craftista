@@ -1,0 +1,81 @@
+
+
+name: Publish Images to ECR
+
+on:
+  push:
+    branches: ["main"]
+    tags: ["v*.*.*"]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: "132410971191"
+
+  ECR_CATALOGUE: "132410971191.dkr.ecr.us-east-1.amazonaws.com/craftista-catalogue"
+  ECR_FRONTEND: "132410971191.dkr.ecr.us-east-1.amazonaws.com/craftista-frontend"
+  ECR_RECOMMENDATION: "132410971191.dkr.ecr.us-east-1.amazonaws.com/craftista-recommendation"
+  ECR_VOTING: "132410971191.dkr.ecr.us-east-1.amazonaws.com/craftista-voting"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::132410971191:role/craftista-dev-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Determine image tag
+        id: vars
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=sha-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push catalogue
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/catalogue
+          push: true
+          tags: |
+            ${{ env.ECR_CATALOGUE }}:${{ steps.vars.outputs.tag }}
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/frontend
+          push: true
+          tags: |
+            ${{ env.ECR_FRONTEND }}:${{ steps.vars.outputs.tag }}
+
+      - name: Build & push recommendation
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/recommendation
+          push: true
+          tags: |
+            ${{ env.ECR_RECOMMENDATION }}:${{ steps.vars.outputs.tag }}
+
+      - name: Build & push voting
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services/voting
+          push: true
+          tags: |
+            ${{ env.ECR_VOTING }}:${{ steps.vars.outputs.tag }}
