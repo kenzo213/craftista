@@ -1,0 +1,42 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: craftista-probe-alerts
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    prometheus: kube-prometheus-stack-prometheus
+spec:
+  groups:
+    - name: craftista-http-probes
+      interval: 30s
+      rules:
+        - alert: CraftistServiceDown
+          expr: probe_success{job="probe/monitoring/craftista-http-probes"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            service: craftista
+          annotations:
+            summary: "Craftista service {{ $labels.instance }} is down"
+            description: "HTTP probe for {{ $labels.instance }} has been failing for more than 2 minutes. Current status: {{ $value }}"
+
+        - alert: CraftistServiceSlowResponse
+          expr: probe_duration_seconds{job="probe/monitoring/craftista-http-probes"} > 5
+          for: 5m
+          labels:
+            severity: warning
+            service: craftista
+          annotations:
+            summary: "Craftista service {{ $labels.instance }} is responding slowly"
+            description: "HTTP probe for {{ $labels.instance }} is taking {{ $value }}s to respond (threshold: 5s)"
+
+        - alert: CraftistServiceHttpError
+          expr: probe_http_status_code{job="probe/monitoring/craftista-http-probes"} >= 400
+          for: 2m
+          labels:
+            severity: warning
+            service: craftista
+          annotations:
+            summary: "Craftista service {{ $labels.instance }} returning HTTP errors"
+            description: "HTTP probe for {{ $labels.instance }} is returning status code {{ $value }}"

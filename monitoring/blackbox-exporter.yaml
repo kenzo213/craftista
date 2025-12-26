@@ -1,0 +1,119 @@
+---
+# Install Prometheus Blackbox Exporter for HTTP probing
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blackbox-exporter-config
+  namespace: monitoring
+data:
+  blackbox.yml: |
+    modules:
+      http_2xx:
+        prober: http
+        timeout: 5s
+        http:
+          valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+          valid_status_codes: [200, 301, 302]
+          method: GET
+          follow_redirects: true
+          preferred_ip_protocol: "ip4"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blackbox-exporter
+  namespace: monitoring
+  labels:
+    app: blackbox-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blackbox-exporter
+  template:
+    metadata:
+      labels:
+        app: blackbox-exporter
+    spec:
+      containers:
+      - name: blackbox-exporter
+        image: prom/blackbox-exporter:v0.24.0
+        args:
+          - --config.file=/config/blackbox.yml
+        ports:
+        - containerPort: 9115
+          name: http
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9115
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9115
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: blackbox-exporter-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blackbox-exporter
+  namespace: monitoring
+  labels:
+    app: blackbox-exporter
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9115
+    targetPort: 9115
+    protocol: TCP
+    name: http
+  selector:
+    app: blackbox-exporter
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: blackbox-exporter
+  namespace: monitoring
+  labels:
+    app: blackbox-exporter
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: blackbox-exporter
+  endpoints:
+  - port: http
+    interval: 30s
+---
+# Probe configuration for Craftista services
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: craftista-http-probes
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  prober:
+    url: blackbox-exporter.monitoring.svc.cluster.local:9115
+  module: http_2xx
+  targets:
+    staticConfig:
+      static:
+        - http://catalogue.craftista.svc.cluster.local:5000/api/products
+        - http://frontend.craftista.svc.cluster.local:80/
+        - http://voting.craftista.svc.cluster.local:8080/api/origamis
+        - http://recommendation.craftista.svc.cluster.local:8080/
+  interval: 30s
+  scrapeTimeout: 10s

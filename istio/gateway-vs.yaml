@@ -1,0 +1,51 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: craftista-gw
+  namespace: craftista
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: craftista
+  namespace: craftista
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - craftista-gw
+  http:
+  - match:
+    - uri:
+        prefix: /api/products
+    route:
+    - destination:
+        host: catalogue
+        port:
+          number: 5000
+  - match:
+    - uri:
+        prefix: /api/origamis
+    route:
+    - destination:
+        host: voting
+        port:
+          number: 8080
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: frontend
+        port:
+          number: 80
